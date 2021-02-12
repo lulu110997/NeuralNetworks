@@ -22,6 +22,7 @@ class PreProcessingData():
 		for d in listdir(data_path):
 			image_folders.append(join(data_path,d)) # Obtain the directory path for the image folders
 		row = -1 # Used to select the one hot vector in the identity matrix
+		test_counter = 0 # test
 		for f in image_folders: # Iterate through all the folders that contains the images
 			row += 1
 			for i in listdir(f): # Select all the images in the folder
@@ -31,6 +32,10 @@ class PreProcessingData():
 				except:
 					print("Please check the following files are not corrupted ", join(f,i))
 				training_data = np.vstack((training_data,np.array([img, np.eye(num_classes)[row]])))
+				test_counter+=1 # test
+				if test_counter > 800: # test
+					break # test
+			test_counter = 0 # test
 		training_data = training_data[1:]
 		np.random.shuffle(training_data)
 		print("\nPaths to folders that contains the images include: ", image_folders)
@@ -39,7 +44,7 @@ class PreProcessingData():
 
 	def SaveAsTensor(self, npy_path, images_path, labels_path, image_size, image_depth):
 		dataset = np.load(npy_path, allow_pickle=True)
-		Print("Turning np data as a tensor...\n")
+		print("Turning np data as a tensor...\n")
 		x = torch.Tensor([i[0] for i in dataset]).view(-1,image_depth,image_size,image_size)
 		x = x/255
 		y = torch.Tensor([i[1] for i in dataset])
@@ -71,3 +76,22 @@ class PreProcessingData():
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
+##############################
+def main():
+	preProcInst = PreProcessingData()
+	preProcInst.SaveAsNumpyArray(data_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\train', save_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestrain.npy', flag=0, image_size=50)
+	preProcInst.SaveAsNumpyArray(data_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\test', save_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestest.npy', flag=0, image_size=50)
+	npy_trainingpath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestrain.npy'
+	npy_testingpath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestest.npy'
+	training_imagespath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingImages.pt'
+	training_labelspath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingLabels.pt'
+	testing_imagespath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingImages.pt'
+	testing_labelspath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingLabels.pt'
+	preProcInst.SaveAsTensor(npy_testingpath, testing_imagespath, testing_labelspath, 50, 1)
+	preProcInst.SaveAsTensor(npy_trainingpath, training_imagespath, training_labelspath, 50, 1)
+	preProcInst.CheckImagesAndLabels(npy_trainingpath, npy_testingpath)
+	preProcInst.CheckTorchDataset(training_imagespath, training_labelspath, testing_imagespath, testing_labelspath, 50, 1)
+	
+
+if __name__ == "__main__":
+	main()
