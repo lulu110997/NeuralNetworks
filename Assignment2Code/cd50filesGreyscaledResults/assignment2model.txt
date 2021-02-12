@@ -1,0 +1,266 @@
+Max accuracy achieved:  0.7222222222222222
+Corresponding loss achieved:  [0.65117671]
+
+Final conv layer output is:  torch.Size([1, 36, 3, 3])
+Model(
+  (conv1): Conv2d(1, 24, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+  (conv2): Conv2d(24, 28, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+  (conv3): Conv2d(28, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+  (conv4): Conv2d(32, 36, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+  (bn1): BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (bn2): BatchNorm2d(28, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (bn3): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (bn4): BatchNorm2d(36, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (fc1): Linear(in_features=324, out_features=128, bias=True)
+  (fc2): Linear(in_features=128, out_features=2, bias=True)
+)
+
+from torchvision import models, transforms
+from tqdm import tqdm
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import numpy as np
+import matplotlib.pyplot as plt 
+import math 
+import time
+import cv2
+import random
+
+
+def QuestionOne():
+	x = np.array([[-1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1,],
+		[-1, 1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1],
+		[1, 1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1],
+		[-1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1],
+		[1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1],
+		[-1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1]])
+	d = np.array([[1, -1, -1], [1, -1, -1], [-1, 1, -1], [-1, 1, -1], [-1, -1, 1], [-1, -1, 1]])
+	n = 0.4	
+
+	# Weight of the hidden layer
+	w = np.array([[0.2007, -0.0280, -0.1871, 0.3366],
+		[0.5522, 0.2678, -0.7830, 0.7526],
+		[0.4130, -0.5299, 0.6420, 0.0620]])
+
+	# Weight of the first layer (input weights)
+	wp = np.array([[-0.2206, 0.2139, 0.4764, -0.1886, 0.5775, -0.7873, -0.2943, 0.9803, -0.5945, -0.2076, 0.7611, 0.9635, -0.1627, -0.0503, 0.3443, -0.4812, 0.8625, 0.3333, 0.1565, 0.7611, 0.3211, 0.7651, -0.9820, 0.2245, 0.3536, -0.1562],
+		[0.1932, 0.8436, -0.6475, 0.3365, 0.3365, -0.0542, 0.6263, -0.7222, -0.6026, 0.3556, -0.2030, -0.0680, 0.6924, 0.5947, 0.6762, 0.2802, -0.1763, 0.5520, 0.2588, 0.3365, 0.7628, -0.5172, 0.3358, 0.7878, -0.1101, 0.8217],
+		[0.6525, 0.3525, -0.7127, -0.2266, 0.9001, 0.0526, 0.3200, -0.7556, 0.8162, -0.2201, -0.1762, 0.3838, -0.9662, 0.4567, 0.2211, -0.8686, 0.0110, 0.9339, -0.5050, 0.1110, -0.7695, 0.2020, 0.3378, 0.9417, -0.5127, -0.3599]])
+	J = 4 # Number of neurons in the hidden layer, 3 input + augmented bias input
+
+	part = 1.1
+	print("Please make sure 'part' variable has been changed to suit the question being answered. Current question being answered is ", part, "\n")
+	
+	if part == 1.1:
+		for cycle in range(0,1):
+			vp = np.matmul(wp,x[cycle][np.newaxis].T) # Calculate the first neuron input. The resulting value of the multiplication is dependent on the input matrix sizes
+			y = (1-np.exp(-vp))/(1+np.exp(-vp)) # Feed it into the activation function. Need to use np.exp because math.exp only takes in a single value (not an array)
+			dy = 0.5*(1-y**2) # Calculate the slope
+
+			# Repeat the steps above for the second layer
+			# Need to augment the bias into the hidden layer's output, hence use np.append. 
+			# Add a newaxis since append output is a 1D row vector array
+			v = np.matmul(w,np.append(y, -1)[np.newaxis].T) 
+			z = (1-np.exp(-v))/(1+np.exp(-v))
+			dz = 0.5*(1-z**2)	
+
+			r = d[cycle] - z.T # Calculate the error. Note how we don't need a newaxis since the resultant operations yielded 2D arrays
+			delta = r.T*dz
+
+			# Calculate the weight increment
+			dp = np.matmul(delta.T,w[:,0:(J-1)])*dy.T # Error signal of output layer
+			deltawp =n*dp.T*x[cycle,:]
+
+			# Weight modifications
+			w  = w + n*delta*np.append(y, -1).T
+			wp = wp+deltawp
+
+			print("The updated output layer weight matrix for question 1.1 is: \n", w.round(4), "\n")
+			print("The updated hidden layer weight matrix for question 1.1 is: \n", wp.round(4), "\n")
+	elif part == 1.2:
+		error_acc = np.zeros((51,1))
+		x_test = np.array([[-1, -1, -1, -1, 1, -1, 1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, 1, -1, -1, -1]])
+		for i in range(0,50):
+			cycle_error = 0
+			for cycle in range(0,6):
+				vp = np.matmul(wp,x[cycle][np.newaxis].T) # Calculate the first neuron input. The resulting value of the multiplication is dependent on the input matrix sizes
+				y = (1-np.exp(-vp))/(1+np.exp(-vp)) # Feed it into the activation function. Need to use np.exp because math.exp only takes in a single value (not an array)
+				dy = 0.5*(1-y**2) # Calculate the slope
+
+				# Repeat the steps above for the second layer
+				# Need to augment the bias into the hidden layer's output, hence use np.append. 
+				# Add a newaxis since append output is a 1D row vector array
+				v = np.matmul(w,np.append(y, -1)[np.newaxis].T) 
+				z = (1-np.exp(-v))/(1+np.exp(-v))
+				dz = 0.5*(1-z**2)	
+
+				r = d[cycle] - z.T # Calculate the error. Note how we don't need a newaxis since the resultant operations yielded 2D arrays
+				delta = r.T*dz
+
+				# Calculate the weight increment
+				dp = np.matmul(delta.T,w[:,0:(J-1)])*dy.T # Error signal of output layer
+				deltawp =n*dp.T*x[cycle,:]
+
+				# Weight modifications
+				w  = w + n*delta*np.append(y, -1).T
+				wp = wp+deltawp
+				cycle_error = cycle_error + 0.5*np.sum((r**2))
+			error_acc[i+1,:] = cycle_error
+
+		ceFig, ceAxes = plt.subplots()  
+		ceAxes.set_title("Cycle Error")  
+		ceAxes.grid(True, which='both') 
+		ceAxes.plot(np.arange(1,51),error_acc[1:51,0]) 
+		ceAxes.set_xlabel('Cycles')  
+		ceAxes.set_ylabel('Cycle Error)')
+		plt.show()
+		print("The updated output layer weight matrix for question 1.2, after 50 cycles, is:, \n", w.round(4), "\n")
+		print("The updated hidden layer weight matrix for question 1.2, after 50 cycles, is, \n", wp.round(4), "\n")
+		vp = np.matmul(wp,x_test.T) # Calculate the first neuron input. The resulting value of the multiplication is dependent on the input matrix sizes
+		y = (1-np.exp(-vp))/(1+np.exp(-vp)) # Feed it into the activation function. Need to use np.exp because math.exp only takes in a single value (not an array)
+		dy = 0.5*(1-y**2) # Calculate the slope
+
+		# Repeat the steps above for the second layer
+		# Need to augment the bias into the hidden layer's output, hence use np.append. 
+		# Add a newaxis since append output is a 1D row vector array
+		v = np.matmul(w,np.append(y, -1)[np.newaxis].T) 
+		z = (1-np.exp(-v))/(1+np.exp(-v))
+		print("The output z vector is \n", z.round(4))
+		print("In other words, the network categorises this input into class 4, the shifted number 7")
+
+def Testing(testDataX, testDataY, device, CNNModel):
+	correct = 0
+	total = 0
+	with torch.no_grad():
+		for i in range(len(testDataX)):
+			realClass = torch.argmax(testDataY[i]).to(device)
+			netOut = CNNModel(testDataX[i].view(-1,1,50,50).to(device))
+			predictedClass = torch.argmax(netOut)
+			if predictedClass == realClass:
+				correct +=1
+			total += 1
+		return correct/total
+
+class Model(nn.Module):
+	def __init__(self, channel=1, imageSize=50):
+		super().__init__()
+		# Create a 4 layer convolutional network with batch normalisation
+		self.imageSize = imageSize
+		self.channel = channel 
+		out1 = 24 #
+		out2 = 28 #
+		out3 = 32 #
+		out4 = 36 #
+		self.conv1 = nn.Conv2d(self.channel, out1, 5, stride=1, padding=2) 
+		self.conv2 = nn.Conv2d(out1, out2, 5, stride=1, padding=2)
+		self.conv3 = nn.Conv2d(out2, out3, 5, stride=1, padding=2)
+		self.conv4 = nn.Conv2d(out3, out4, 5, stride=1, padding=2) 
+		self.bn1 = nn.BatchNorm2d(out1)
+		self.bn2 = nn.BatchNorm2d(out2)
+		self.bn3 = nn.BatchNorm2d(out3)
+		self.bn4 = nn.BatchNorm2d(out4)
+
+		# Use dummy data to find the output shape of the final conv layer
+		x = torch.randn(self.channel,self.imageSize,self.imageSize).view(-1,self.channel,self.imageSize,self.imageSize)
+		self._to_linear = None
+		self.convs(x)
+
+		# 3 Dense layers (input, output and a hidden layer)
+		self.fc1 = nn.Linear(self._to_linear, 128)
+		self.fc2 = nn.Linear(128, 2)
+
+	def convs(self, x):
+		# Convolution --> Batch norm --> Activation func --> Pooling
+		x = F.max_pool2d(F.relu(self.bn1(self.conv1((x)))), (2,2))
+		x = F.max_pool2d(F.relu(self.bn2(self.conv2((x)))), (2,2))
+		x = F.max_pool2d(F.relu(self.bn3(self.conv3((x)))), (2,2))
+		x = F.max_pool2d(F.relu(self.bn4(self.conv4((x)))), (2,2))
+
+		if self._to_linear is None: # Determine the number of output neurons of the last convolutional layer. 
+			self._to_linear = x[0].shape[0]*x[0].shape[1]*x[0].shape[2] # This will be the input to the first fully connected layer
+			print("Final conv layer output is: ", x.shape)
+		return x
+
+	def forward(self,x):
+		m = nn.Dropout(0.1)
+		x = self.convs(x)
+		x = x.view(-1, self._to_linear) # Flatten the convolutional layer output before feeding it in the dense layer
+		# Apply the activation function and feed the data in the dense layers
+		x = F.relu(self.fc1(x))
+		x = self.fc2(x)
+		return x
+
+
+def QuestionTwo():
+	device = torch.device("cuda:0")
+	CNNModel = Model().to(device)
+	print(CNNModel)
+	optimizer = optim.Adam(CNNModel.parameters(), lr=0.001)
+	sched = optim.lr_scheduler.StepLR(optimizer, 10, 0.5)
+	lossFunction = nn.CrossEntropyLoss()
+
+	# Load the training and validation images/labels
+	trainDataX = torch.load('C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingImages.pt')
+	trainDataY = torch.load('C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingLabels.pt')
+	testDataX = torch.load('C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingImages.pt')
+	testDataY = torch.load('C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingLabels.pt')
+	trainDataY = trainDataY.type(torch.LongTensor) # For CEL
+
+	batchSize = 32
+	epochs = 50
+	epoch_loss = np.zeros((epochs+1,1)) # Used to track total loss for each epoch
+	epoch_acc = np.zeros((epochs+1,1)) # Used to track accuracy for each epoch
+	batch_loss = np.zeros((len(trainDataX)+1,1)) # Used to store the loss for each batch
+
+	transform2 = transforms.Compose([
+	transforms.RandomRotation(degrees=180),
+	transforms.RandomHorizontalFlip(0.5),
+	transforms.RandomVerticalFlip(0.5),
+	])
+
+	for epoch in tqdm(range(epochs)):
+		# idx = torch.randperm(trainDataX.shape[0])
+		# trainDataX, trainDataY = trainDataX[idx].view(trainDataX.size()), trainDataY[idx].view(trainDataY.size())
+		CNNModel.train()
+		for i in range(0, len(trainDataX), batchSize):
+			batchX = trainDataX[i:i+batchSize]
+			# number = random.uniform(0,1)
+			# if number > 0.5:
+			# 	batchX = transform2(batchX)
+			batchY = trainDataY[i:i+batchSize]
+			batchY = torch.argmax(batchY, dim=1)
+			CNNModel.zero_grad()
+			output = CNNModel(batchX.to(device))
+			loss = lossFunction(output, batchY.to(device))
+			loss.backward()
+			optimizer.step()
+			batch_loss[i,:] = float(loss) # Store the loss for this batch
+		# sched.step()
+		epoch_loss[epoch+1,:] = np.sum(batch_loss) # Store the total loss for this epoch
+		CNNModel.eval()
+		epoch_acc[epoch+1,:] = Testing(testDataX, testDataY, device, CNNModel) # Store the accuracy for this epoch
+		if (epoch_acc[epoch+1,:].item() > epoch_acc[:epoch+1]).all():
+			print("\nAt ", epoch+1, "the accuracy is: ", epoch_acc[epoch+1,:])
+			torch.save(CNNModel.state_dict(), 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\test.pt')
+
+	# Plot the training loss and accuracy
+	ceFig, ceAxes = plt.subplots()  
+	ceAxes.set_title("Error")  
+	ceAxes.grid(True, which='both') 
+	ceAxes.plot(np.arange(1,epochs+1),epoch_loss[1:epochs+1,0]) 
+	ceAxes.set_xlabel('Epochs')  
+	ceAxes.set_ylabel('Error')
+	accFig, accAxes = plt.subplots()  
+	accAxes.set_title("Accuracy")  
+	accAxes.grid(True, which='both') 
+	accAxes.plot(np.arange(1,epochs+1),epoch_acc[1:epochs+1,0]) 
+	accAxes.set_xlabel('Epochs')  
+	accAxes.set_ylabel('Accuracy')
+	print("Max accuracy achieved: ", np.max(epoch_acc))
+	print("Corresponding loss achieved: ", epoch_loss[np.where(epoch_acc == np.max(epoch_acc))])
+	plt.show()
+
+QuestionTwo()
+
