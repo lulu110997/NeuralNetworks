@@ -87,6 +87,7 @@ def create_modules(blocks):
 			# Explanation on the paddings:
 			 # https://github.com/pjreddie/darknet/issues/950
 			 # https://github.com/pjreddie/darknet/issues/950
+			 # Andrew Ng's coursera video on padding helped too
 			if padding:
 				pad = (kernel_size - 1) // 2 # When kernel size is odd and >1, o/p size is equal to i/p size
 			else:
@@ -107,7 +108,7 @@ def create_modules(blocks):
 				module.add_moduel("leaky_{}".format(index), activation_fn)
 
 		elif block['type'] == 'upsample' # for upsampling, use Bilinear2dUpsampling:
-			
+
 		print(module)
 blocks = parse_cfg('cfg/yolov3.cfg')
 create_modules(blocks)
