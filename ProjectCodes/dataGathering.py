@@ -189,42 +189,16 @@ class PreProcessingData():
 
 ##############################
 def main():
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-	preProcInst = PreProcessingData()
-	preProcInst.SaveAsNumpyArray(data_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\train', save_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestrain.npy', flag=0, image_size=50)
-	preProcInst.SaveAsNumpyArray(data_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\test', save_path='C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestest.npy', flag=0, image_size=50)
-	npy_trainingpath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestrain.npy'
-	npy_testingpath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\CD50filestest.npy'
-	training_imagespath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingImages.pt'
-	training_labelspath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTrainingLabels.pt'
-	testing_imagespath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingImages.pt'
-	testing_labelspath = 'C:\\Users\\louis\\OneDrive\\Desktop\\NN\\assignment2\\CD50files\\AssignmentTwoTestingLabels.pt'
-	preProcInst.SaveAsTensor(npy_testingpath, testing_imagespath, testing_labelspath, 50, 1)
-	preProcInst.SaveAsTensor(npy_trainingpath, training_imagespath, training_labelspath, 50, 1)
-	preProcInst.CheckImagesAndLabels(npy_trainingpath, npy_testingpath)
-	preProcInst.CheckTorchDataset(training_imagespath, training_labelspath, testing_imagespath, testing_labelspath, 50, 1)
-=======
-	inst = PreProcessingData()
-	training_img_path = 'C:\\Users\\louis\\Downloads\\del\\testingmodule\\Train'
-	validation_img_path = 'C:\\Users\\louis\\Downloads\\del\\testingmodule\\Validate'
-	save_paths = inst.SaveAsNumpyArray(training_img_path=training_img_path, image_size=90, ratio=0.8, validation_img_path=validation_img_path)
-=======
+
 	inst = PreProcessingData()
 	training_img_path = 'C:\\Users\\louis\\Downloads\\del\\testingmodule\\Train'
 	validation_img_path = 'C:\\Users\\louis\\Downloads\\del\\testingmodule\\Validate'
 	save_paths = inst.SaveAsNumpyArray(training_img_path=training_img_path, image_size=90, ratio=0.5, validation_img_path=validation_img_path)
->>>>>>> 5348429084ee74d933529826562a75071eb861bc
 	train_tensor = inst.SaveAsTensor(save_paths[0], 'training_images.pt', 'training_labels.pt')
 	val_tensor = inst.SaveAsTensor(save_paths[1], 'validation_images.pt', 'validation_labels.pt')
 	inst.CheckImagesAndLabels(save_paths[0])
 	inst.CheckImagesAndLabels(save_paths[1])
 	inst.CheckTorchDataset(train_tensor[0], train_tensor[1], val_tensor[0], val_tensor[1])
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> 5348429084ee74d933529826562a75071eb861bc
-	
 
 if __name__ == "__main__":
 	main()
